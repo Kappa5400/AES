@@ -8,7 +8,7 @@
 plaintext = "test_test_test_t"
 
 # keys
-key = "coffee_coffee_co"
+key = "cappacino_cappac"
 
 
 #assign string later
