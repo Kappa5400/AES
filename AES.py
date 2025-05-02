@@ -1,3 +1,4 @@
+from typing import List
 
 # values
 
@@ -9,7 +10,11 @@ plaintext = "test_test_test_t"
 
 # keys
 key = "cappacino_cappac"
-
+ascii_key = [ord(i) for i in key]
+key_matrix_row_1 = []
+key_matrix_row_2 = []
+key_matrix_row_3 = []
+key_matrix_row_4 = []
 
 #assign string later
 cyphertext = None
@@ -57,6 +62,7 @@ s_box = {
     0xF0: 0x8C, 0xF1: 0xA1, 0xF2: 0x89, 0xF3: 0x0D, 0xF4: 0xBF, 0xF5: 0xE6, 0xF6: 0x42, 0xF7: 0x68,
     0xF8: 0x41, 0xF9: 0x99, 0xFA: 0x2D, 0xFB: 0x0F, 0xFC: 0xB0, 0xFD: 0x54, 0xFE: 0xBB, 0xFF: 0x16
 }
+
 fixed_matrix = [[2,3,1,1], [1,2,3,1],[1,1,2,3],[3,1,1,2]]
 
 # methods
@@ -87,6 +93,7 @@ def format_key(key):
     key_matrix = [key_matrix_row_1,key_matrix_row_2,key_matrix_row_3,key_matrix_row_4]
     print(key_matrix)
 
+
     for i in key_matrix:
         for d in i:
             hex_key.append(hex(d))
@@ -95,8 +102,54 @@ def format_key(key):
 
     return key_matrix
 
-def key_expansion(key_matrix, key_matrix_row_1, key_matrix_row_2, key_matrix_row_3, key_matrix_row_4 ):
-    return 0
+def key_expansion(key_matrix, key_matrix_row_1, key_matrix_row_2, key_matrix_row_3, key_matrix_row_4):
+    #assumes 128
+    def round_constant(var):
+        result = 1
+        for i in range(var - 1):
+            result = result << 1
+            if result & 0x100:
+                result ^= 0x11b
+        return [result, 0, 0, 0]
+
+    def rotate_word(word):
+        return word[1:] + word[:1]
+
+    def sub_word(word):
+        return [s_box[b] for b in word]
+
+    Nk = 4 #word in key
+    Nb = 4 #word in block
+    Nr = 10 #rounds
+    W = []
+
+    for i in range(Nk):
+        W.append(key_matrix[i])
+
+    for i in range(Nk, Nb * (Nr + 1)):  # Total number of words needed for AES-128
+        temp = W[i - 1].copy()
+
+        if i % Nk == 0:
+            # Apply SubWord and RotateWord to the previous word
+            temp = sub_word(rotate_word(temp))
+            # XOR with the round constant (Rcon)
+            temp = [a ^ b for a, b in zip(temp, round_constant(i // Nk))]
+
+        # XOR with the word from 4 steps earlier
+        temp = [a ^ b for a, b in zip(W[i - Nk], temp)]
+        W.append(temp)
+
+    # Output the full expanded key schedule (W)
+    print(f"Expanded Key Schedule: {W}")
+    # Group into 11 round keys
+    round_keys = [W[i:i + 4] for i in range(0, len(W), 4)]
+    for i, round_key in enumerate(round_keys):
+        print(f"Round {i} key:")
+        for word in round_key:
+            print(word)
+        print()
+
+    return W
 
 def shift_row():
     return 0
@@ -107,8 +160,12 @@ def mix_column():
 def add_round():
     return 0
 
-def initial_round(key, plaintext):
-    return 0
+def initial_round(key_array):
+    key_1 = []
+    for i in key_array:
+       key_1.append(s_box.get(i,i))
+    print(f"Key_1: {key_1}")
+    return key_1
 
 def last_round():
     return 0
@@ -117,4 +174,7 @@ def aes(plaintext, key):
 
     return 0
 
-format_key(key)
+key_matrix = format_key(key)
+initial_round(ascii_key)
+key_expansion(key_matrix, key_matrix[0], key_matrix[1], key_matrix[2], key_matrix[3])
+
